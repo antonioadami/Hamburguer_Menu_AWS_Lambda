@@ -36,6 +36,36 @@ Parameters:
     Default: 5432
 
 Resources:
+  ConfigureDatabaseFunction:
+    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    Properties:
+      CodeUri: hamburguer-api
+      Handler: config/configure-database.lambdaHandler
+      Runtime: nodejs20.x
+      Architectures:
+      - x86_64
+      Events:
+        ConfigureDatabase:
+          Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
+          Properties:
+            Path: /configure
+            Method: get
+      Environment:
+        Variables:
+          # Make table name accessible as environment variable from function code during execution
+          DB_USER: !Ref DBUser
+          DB_PASSWORD: !Ref DBPassword
+          DB_HOST: !Ref DBHost
+          DB_NAME: !Ref DBName
+          DB_PORT: !Ref DBPort
+    Metadata: # Manage esbuild properties
+      BuildMethod: esbuild
+      BuildProperties:
+        Minify: true
+        Target: es2020
+        Sourcemap: true
+        EntryPoints:
+        - config/configure-database.ts
   GetIngredientsFunction:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
     Properties:

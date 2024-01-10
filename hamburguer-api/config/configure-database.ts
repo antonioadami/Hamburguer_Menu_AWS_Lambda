@@ -26,11 +26,34 @@ export const lambdaHandler = async (event: APIGatewayProxyEvent): Promise<APIGat
     try {
         await client.connect();
 
-        const query = await client.query(`SELECT * FROM INGREDIENTS;`);
+        await client.query(`
+            CREATE TABLE hamburguers(
+                id SERIAL not null,
+                name VARCHAR(25) not null,
+                price float not null,
+                primary key(id)
+            );`);
+
+        await client.query(`
+            CREATE TABLE ingredients(
+                id SERIAL not null,
+                name VARCHAR(25) not null,
+                unit varchar(10),
+                amount float default 0,
+                primary key(id)
+            );`);
+
+        await client.query(`
+            create table hamburguer_ingredient (
+                hamburguer_id int not null,
+                ingredient_id int not null,
+                CONSTRAINT ingredient_fk foreign key (ingredient_id) references ingredients(id),
+                CONSTRAINT hamburguer_fk foreign key (hamburguer_id) references hamburguers(id),
+                CONSTRAINT hamburguer_ingredient_unique UNIQUE (hamburguer_id, ingredient_id)
+            )`);
 
         body = JSON.stringify({
-            message: 'connected',
-            query: query.rows,
+            message: 'Database configured',
         });
     } catch (err) {
         console.log(err);
