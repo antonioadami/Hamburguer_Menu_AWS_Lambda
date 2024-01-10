@@ -1,0 +1,118 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  node-hamburguer
+
+  Sample SAM Template for node-hamburguer
+
+# More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
+Globals:
+  Function:
+    Timeout: 3
+    # You can add LoggingConfig parameters such as the Logformat, Log Group, and SystemLogLevel or ApplicationLogLevel. Learn more here https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/sam-resource-function.html#sam-function-loggingconfig.
+    LoggingConfig:
+      LogFormat: JSON
+
+Parameters:
+  DBUser:
+    Type: String
+    Description: Database user
+    Default: postgres
+  DBPassword:
+    Type: String
+    Description: Database password
+    Default: yourdatabase  password
+  DBHost:
+    Type: String
+    Description: Database host
+    Default: yourdatabase  host
+  DBName:
+    Type: String
+    Description: Database name
+    Default: your database name
+  DBPort:
+    Type: Number
+    Description: Database port
+    Default: 5432
+
+Resources:
+  GetIngredientsFunction:
+    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    Properties:
+      CodeUri: hamburguer-api
+      Handler: ingredients/get-ingredients.lambdaHandler
+      Runtime: nodejs20.x
+      Architectures:
+      - x86_64
+      Events:
+        GetIngredients:
+          Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
+          Properties:
+            Path: /ingredients
+            Method: get
+      Environment:
+        Variables:
+          # Make table name accessible as environment variable from function code during execution
+          DB_USER: !Ref DBUser
+          DB_PASSWORD: !Ref DBPassword
+          DB_HOST: !Ref DBHost
+          DB_NAME: !Ref DBName
+          DB_PORT: !Ref DBPort
+    Metadata: # Manage esbuild properties
+      BuildMethod: esbuild
+      BuildProperties:
+        Minify: true
+        Target: es2020
+        Sourcemap: true
+        EntryPoints:
+        - ingredients/get-ingredients.ts
+  PostIngredientsFunction:
+    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    Properties:
+      CodeUri: hamburguer-api
+      Handler: ingredients/post-ingredients.lambdaHandler
+      Runtime: nodejs20.x
+      Architectures:
+      - x86_64
+      Events:
+        PostIngredients:
+          Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
+          Properties:
+            Path: /ingredients
+            Method: post
+      Environment:
+        Variables:
+          # Make table name accessible as environment variable from function code during execution
+          DB_USER: !Ref DBUser
+          DB_PASSWORD: !Ref DBPassword
+          DB_HOST: !Ref DBHost
+          DB_NAME: !Ref DBName
+          DB_PORT: !Ref DBPort
+    Metadata: # Manage esbuild properties
+      BuildMethod: esbuild
+      BuildProperties:
+        Minify: true
+        Target: es2020
+        Sourcemap: true
+        EntryPoints:
+        - ingredients/post-ingredients.ts
+
+Outputs:
+  # ServerlessRestApi is an implicit API created out of Events key under Serverless::Function
+  # Find out more about other implicit resources you can reference within SAM
+  # https://github.com/awslabs/serverless-application-model/blob/master/docs/internals/generated_resources.rst#api
+  HamburguerApi:
+    Description: API Gateway endpoint URL for Prod stage for Get Ingredients function
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/"
+  GetIngredientsFunction:
+    Description: Get Ingredient Lambda Function ARN
+    Value: !GetAtt GetIngredientsFunction.Arn
+  GetIngredientsFunctionIamRole:
+    Description: Implicit IAM Role created for Get Ingredients function
+    Value: !GetAtt GetIngredientsFunctionRole.Arn
+  PostIngredientsFunction:
+    Description: Post Ingredient Lambda Function ARN
+    Value: !GetAtt PostIngredientsFunction.Arn
+  PostIngredientsFunctionIamRole:
+    Description: Implicit IAM Role created for Get Ingredients function
+    Value: !GetAtt PostIngredientsFunctionRole.Arn
