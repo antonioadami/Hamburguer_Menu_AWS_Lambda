@@ -23,19 +23,28 @@ export const lambdaHandler = async (event: APIGatewayProxyEvent): Promise<APIGat
         database: process.env.DB_NAME,
         port: parseInt(process.env.DB_PORT as string),
     });
+    let query = '';
 
     try {
         if (!event.body) {
             throw new AppError(404, 'Request must have a body');
         }
-        const data = JSON.parse(event.body);
-        if (!data.name) {
-            throw new AppError(404, "Missing 'name' property");
+        const { data } = JSON.parse(event.body);
+        if (!Array.isArray(data)) {
+            throw new AppError(404, 'Data must be an Array');
         }
 
+        data.map((dataItem) => {
+            if (!dataItem.type) {
+                throw new AppError(404, "Missing 'type'");
+            }
+            query += `INSERT INTO ${dataItem.type}(${Object.keys(dataItem.attributes)}) VALUES(${Object.values(
+                dataItem.attributes,
+            ).map((value) => (typeof value === 'string' ? `'${value}'` : value))});`;
+        });
         await client.connect();
-        const query = `INSERT INTO ingredients(name) VALUES('${data.name}');`;
         console.log(query);
+
         await client.query(query);
         statusCode = 201;
     } catch (err) {
@@ -50,6 +59,8 @@ export const lambdaHandler = async (event: APIGatewayProxyEvent): Promise<APIGat
         }
         body = JSON.stringify({
             message,
+            query,
+            err,
         });
     } finally {
         await client.end();

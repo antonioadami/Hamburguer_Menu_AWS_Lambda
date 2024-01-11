@@ -27,10 +27,14 @@ export const lambdaHandler = async (event: APIGatewayProxyEvent): Promise<APIGat
         await client.connect();
 
         const query = await client.query(`SELECT * FROM INGREDIENTS;`);
+        const data = query.rows.map((row) => ({
+            type: 'ingredients',
+            id: row.id,
+            attributes: Object.fromEntries(Object.entries(row).filter(([key, value]) => key !== 'id')),
+        }));
 
         body = JSON.stringify({
-            message: 'connected',
-            query: query.rows,
+            data,
         });
     } catch (err) {
         console.log(err);
