@@ -49,7 +49,7 @@ Resources:
           Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
           Properties:
             Path: /configure
-            Method: get
+            Method: post
       Environment:
         Variables:
           # Make table name accessible as environment variable from function code during execution
@@ -146,3 +146,9 @@ Outputs:
   PostIngredientsFunctionIamRole:
     Description: Implicit IAM Role created for Get Ingredients function
     Value: !GetAtt PostIngredientsFunctionRole.Arn
+  ConfigureDatabaseFunction:
+    Description: Post Ingredient Lambda Function ARN
+    Value: !GetAtt ConfigureDatabaseFunction.Arn
+  ConfigureDatabaseFunctionIamRole:
+    Description: Implicit IAM Role created for Get Ingredients function
+    Value: !GetAtt ConfigureDatabaseFunctionRole.Arn

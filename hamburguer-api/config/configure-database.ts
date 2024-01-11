@@ -16,18 +16,17 @@ export const lambdaHandler = async (event: APIGatewayProxyEvent): Promise<APIGat
     let body = '';
 
     const client = new Client({
-        user: 'postgres',
-        host: '',
-        database: 'hamburguers',
-        password: '',
-        port: 5432,
+        user: process.env.DB_USER,
+        host: process.env.DB_HOST,
+        password: process.env.DB_PASSWORD,
+        database: process.env.DB_NAME,
+        port: parseInt(process.env.DB_PORT as string),
     });
 
     try {
         await client.connect();
-
         await client.query(`
-            CREATE TABLE hamburguers(
+            CREATE TABLE IF NOT EXISTS hamburguers(
                 id SERIAL not null,
                 name VARCHAR(25) not null,
                 price float not null,
@@ -35,7 +34,7 @@ export const lambdaHandler = async (event: APIGatewayProxyEvent): Promise<APIGat
             );`);
 
         await client.query(`
-            CREATE TABLE ingredients(
+            CREATE TABLE IF NOT EXISTS ingredients(
                 id SERIAL not null,
                 name VARCHAR(25) not null,
                 unit varchar(10),
@@ -44,7 +43,7 @@ export const lambdaHandler = async (event: APIGatewayProxyEvent): Promise<APIGat
             );`);
 
         await client.query(`
-            create table hamburguer_ingredient (
+            CREATE TABLE IF NOT EXISTS hamburguer_ingredient (
                 hamburguer_id int not null,
                 ingredient_id int not null,
                 CONSTRAINT ingredient_fk foreign key (ingredient_id) references ingredients(id),

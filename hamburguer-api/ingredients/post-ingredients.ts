@@ -17,11 +17,11 @@ export const lambdaHandler = async (event: APIGatewayProxyEvent): Promise<APIGat
     let body = '';
 
     const client = new Client({
-        user: 'postgres',
-        host: '',
-        database: 'hamburguers',
-        password: '',
-        port: 5432,
+        user: process.env.DB_USER,
+        host: process.env.DB_HOST,
+        password: process.env.DB_PASSWORD,
+        database: process.env.DB_NAME,
+        port: parseInt(process.env.DB_PORT as string),
     });
 
     try {
