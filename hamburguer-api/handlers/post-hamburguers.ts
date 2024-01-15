@@ -24,45 +24,70 @@ export const lambdaHandler = async (event: APIGatewayProxyEvent): Promise<APIGat
         port: parseInt(process.env.DB_PORT as string),
     });
     let query = '';
-    let findQuery = 'SELECT id FROM hamburguers WHERE name IN(';
+    let relationshipQuery = '';
+
+    let response: any;
 
     try {
         if (!event.body) {
             throw new AppError(404, 'Request must have a body');
         }
         const { data } = JSON.parse(event.body);
-        if (!Array.isArray(data)) {
-            throw new AppError(404, 'Data must be an Array');
+        const { relationships } = data;
+        if (Array.isArray(data)) {
+            throw new AppError(404, 'Data must not be an Array');
         }
 
-        data.forEach((dataItem, index) => {
-            if (!dataItem.type) {
-                throw new AppError(404, "Missing 'type'");
-            }
-            if (dataItem.type !== 'hamburguers') {
-                throw new AppError(404, "Wrong 'type'");
-            }
+        if (!data.type) {
+            throw new AppError(404, "Missing 'type'");
+        }
+        if (data.type !== 'hamburguers') {
+            throw new AppError(404, "Wrong 'type'");
+        }
 
-            if (index !== 0) {
-                findQuery += ', ';
-            }
-            findQuery += `'${dataItem.attributes.name}'`;
+        const findBurguerQuery = `SELECT id FROM hamburguers WHERE name='${data.attributes.name}';`;
 
-            query += `INSERT INTO hamburguers(${Object.keys(dataItem.attributes)}) VALUES(${Object.values(
-                dataItem.attributes,
-            ).map((value) => (typeof value === 'string' ? `'${value}'` : value))});`;
-        });
-        findQuery += ');';
+        query += `INSERT INTO hamburguers(${Object.keys(data.attributes)}) VALUES(${Object.values(data.attributes).map(
+            (value) => (typeof value === 'string' ? `'${value}'` : value),
+        )});`;
 
         await client.connect();
 
-        const existingData = await client.query(findQuery);
+        const existingBurguer = await client.query(findBurguerQuery);
 
-        if (existingData.rowCount !== 0) {
-            throw new AppError(404, 'Hambuerguer already exists');
+        if (existingBurguer.rowCount !== 0) {
+            throw new AppError(404, 'Hamburguer already exists');
         }
 
-        await client.query(query);
+        response = await client.query(query);
+
+        let findIngredientQuery = 'SELECT id FROM ingredients WHERE id IN(';
+
+        (relationships?.ingredients?.data as any[]).forEach((relationshipItem, index) => {
+            if (!relationshipItem.type) {
+                throw new AppError(404, "Missing 'type'");
+            }
+            if (relationshipItem.type !== 'ingredients') {
+                throw new AppError(404, "Must be related to 'ingredient' type");
+            }
+
+            if (index !== 0) {
+                findIngredientQuery += ', ';
+            }
+            findIngredientQuery += `'${relationshipItem.id}'`;
+
+            relationshipQuery += `INSERT INTO hamburguer_ingredient(hamburguer_id, ingredient_id) VALUES(LASTVAL(), ${relationshipItem.id});`;
+        });
+
+        findIngredientQuery += ');';
+        const existingIngredient = await client.query(findIngredientQuery);
+
+        if (existingIngredient.rowCount !== relationships?.ingredients?.data.length) {
+            throw new AppError(404, 'An ingredient on relationships does not exist');
+        }
+
+        await client.query(relationshipQuery);
+
         statusCode = 201;
     } catch (err) {
         console.log(err);
@@ -76,6 +101,7 @@ export const lambdaHandler = async (event: APIGatewayProxyEvent): Promise<APIGat
         }
         body = JSON.stringify({
             message,
+            response,
             err,
         });
     } finally {
