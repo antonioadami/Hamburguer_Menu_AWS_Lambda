@@ -24,6 +24,7 @@ export const lambdaHandler = async (event: APIGatewayProxyEvent): Promise<APIGat
         port: parseInt(process.env.DB_PORT as string),
     });
     let query = '';
+    let findQuery = 'SELECT id FROM hamburguers WHERE name IN(';
 
     try {
         if (!event.body) {
@@ -34,16 +35,32 @@ export const lambdaHandler = async (event: APIGatewayProxyEvent): Promise<APIGat
             throw new AppError(404, 'Data must be an Array');
         }
 
-        data.map((dataItem) => {
+        data.forEach((dataItem, index) => {
             if (!dataItem.type) {
                 throw new AppError(404, "Missing 'type'");
             }
-            query += `INSERT INTO ${dataItem.type}(${Object.keys(dataItem.attributes)}) VALUES(${Object.values(
+            if (dataItem.type !== 'hamburguers') {
+                throw new AppError(404, "Wrong 'type'");
+            }
+
+            if (index !== 0) {
+                findQuery += ', ';
+            }
+            findQuery += `'${dataItem.attributes.name}'`;
+
+            query += `INSERT INTO hamburguers(${Object.keys(dataItem.attributes)}) VALUES(${Object.values(
                 dataItem.attributes,
             ).map((value) => (typeof value === 'string' ? `'${value}'` : value))});`;
         });
+        findQuery += ');';
+
         await client.connect();
-        console.log(query);
+
+        const existingData = await client.query(findQuery);
+
+        if (existingData.rowCount !== 0) {
+            throw new AppError(404, 'Hambuerguer already exists');
+        }
 
         await client.query(query);
         statusCode = 201;
@@ -59,7 +76,6 @@ export const lambdaHandler = async (event: APIGatewayProxyEvent): Promise<APIGat
         }
         body = JSON.stringify({
             message,
-            query,
             err,
         });
     } finally {

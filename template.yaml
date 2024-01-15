@@ -96,11 +96,41 @@ Resources:
         Sourcemap: true
         EntryPoints:
         - handlers/get-ingredients.ts
-  PostDataFunction:
+  GetMenuFunction:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
     Properties:
       CodeUri: hamburguer-api
-      Handler: handlers/post-data.lambdaHandler
+      Handler: handlers/get-menu.lambdaHandler
+      Runtime: nodejs20.x
+      Architectures:
+      - x86_64
+      Events:
+        GetMenu:
+          Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
+          Properties:
+            Path: /menu
+            Method: get
+      Environment:
+        Variables:
+          # Make table name accessible as environment variable from function code during execution
+          DB_USER: !Ref DBUser
+          DB_PASSWORD: !Ref DBPassword
+          DB_HOST: !Ref DBHost
+          DB_NAME: !Ref DBName
+          DB_PORT: !Ref DBPort
+    Metadata: # Manage esbuild properties
+      BuildMethod: esbuild
+      BuildProperties:
+        Minify: true
+        Target: es2020
+        Sourcemap: true
+        EntryPoints:
+        - handlers/get-menu.ts
+  PostIngredientsFunction:
+    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    Properties:
+      CodeUri: hamburguer-api
+      Handler: handlers/post-ingredients.lambdaHandler
       Runtime: nodejs20.x
       Architectures:
       - x86_64
@@ -108,7 +138,7 @@ Resources:
         PostIngredients:
           Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
           Properties:
-            Path: /post-data
+            Path: /ingredients
             Method: post
       Environment:
         Variables:
@@ -125,7 +155,37 @@ Resources:
         Target: es2020
         Sourcemap: true
         EntryPoints:
-        - handlers/post-data.ts
+        - handlers/post-ingredients.ts
+  PostHamburguersFunction:
+    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    Properties:
+      CodeUri: hamburguer-api
+      Handler: handlers/post-hamburguers.lambdaHandler
+      Runtime: nodejs20.x
+      Architectures:
+      - x86_64
+      Events:
+        PostIngredients:
+          Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
+          Properties:
+            Path: /hamburguers
+            Method: post
+      Environment:
+        Variables:
+          # Make table name accessible as environment variable from function code during execution
+          DB_USER: !Ref DBUser
+          DB_PASSWORD: !Ref DBPassword
+          DB_HOST: !Ref DBHost
+          DB_NAME: !Ref DBName
+          DB_PORT: !Ref DBPort
+    Metadata: # Manage esbuild properties
+      BuildMethod: esbuild
+      BuildProperties:
+        Minify: true
+        Target: es2020
+        Sourcemap: true
+        EntryPoints:
+        - handlers/post-hamburguers.ts
 
 Outputs:
   # ServerlessRestApi is an implicit API created out of Events key under Serverless::Function
