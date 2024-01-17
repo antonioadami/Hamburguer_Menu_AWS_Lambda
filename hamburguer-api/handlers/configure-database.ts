@@ -46,6 +46,7 @@ export const lambdaHandler = async (event: APIGatewayProxyEvent): Promise<APIGat
             CREATE TABLE IF NOT EXISTS hamburguer_ingredient (
                 hamburguer_id int not null,
                 ingredient_id int not null,
+                amount float not null,
                 CONSTRAINT ingredient_fk foreign key (ingredient_id) references ingredients(id),
                 CONSTRAINT hamburguer_fk foreign key (hamburguer_id) references hamburguers(id),
                 CONSTRAINT hamburguer_ingredient_unique UNIQUE (hamburguer_id, ingredient_id)

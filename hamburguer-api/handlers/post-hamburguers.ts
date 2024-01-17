@@ -76,7 +76,7 @@ export const lambdaHandler = async (event: APIGatewayProxyEvent): Promise<APIGat
             }
             findIngredientQuery += `'${relationshipItem.id}'`;
 
-            relationshipQuery += `INSERT INTO hamburguer_ingredient(hamburguer_id, ingredient_id) VALUES(LASTVAL(), ${relationshipItem.id});`;
+            relationshipQuery += `INSERT INTO hamburguer_ingredient(hamburguer_id, ingredient_id, amount) VALUES(LASTVAL(), ${relationshipItem.id}, ${relationshipItem.amount});`;
         });
 
         findIngredientQuery += ');';
