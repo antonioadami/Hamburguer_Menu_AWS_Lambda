@@ -15,11 +15,6 @@ import AppError from '../errors/AppError';
 export const lambdaHandler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
     let statusCode = 200;
     let body = '';
-    const burguerId = parseInt(event.pathParameters?.id as string);
-
-    if(!Number.isNaN(burguerId)) {
-        throw new AppError(404, 'Missing burguer id path parameter');
-    }
 
     const client = new Client({
         user: process.env.DB_USER,
@@ -28,21 +23,40 @@ export const lambdaHandler = async (event: APIGatewayProxyEvent): Promise<APIGat
         database: process.env.DB_NAME,
         port: parseInt(process.env.DB_PORT as string),
     });
-    let query = `select * from hamburguers h join hamburguer_ingredient hi ON h.id = hi.hamburguer_id  join ingredients i ON hi.ingredient_id  = i.id where h.id = ${burguerId};`;
 
     try {
+        const burguerId = parseInt(event.pathParameters?.id as string);
+
+        if (Number.isNaN(burguerId)) {
+            throw new AppError(404, 'Missing burguer id path parameter');
+        }
+
+        const query = `select i.id as ingredient_id, hi.amount as needed_amount, i.amount as amount, i.name as name from hamburguers h join hamburguer_ingredient hi ON h.id = hi.hamburguer_id  join ingredients i ON hi.ingredient_id  = i.id where h.id = ${burguerId};`;
 
         await client.connect();
+        const { rows, rowCount } = await client.query(query);
 
-        const response = await client.query(query);
+        if (rowCount === 0) {
+            throw new AppError(404, 'Burguer does not exists');
+        }
 
-        // if (response.rowCount !== 0) {
-        //     throw new AppError(404, 'Burguer does not exists');
-        // }
-        statusCode = 201;
-        body = JSON.stringify(response)
-    } catch (err) {
-        console.log(JSON.stringify(err));
+        const insufficientIngredients = rows.some((row) => row.amount < row.needed_amount);
+
+        if (insufficientIngredients) {
+            throw new AppError(404, 'Insufficient ingredients');
+        }
+
+        const promises = rows.map((row) => {
+            const updateQuery = `UPDATE ingredients SET amount=${row.amount - row.needed_amount} WHERE id=${
+                row.ingredient_id
+            }`;
+            return client.query(updateQuery);
+        });
+
+        await Promise.all(promises);
+
+        statusCode = 200;
+    } catch (err: any) {
         let message = '';
         if (!(err instanceof AppError) || !err.statusCode) {
             statusCode = 500;
@@ -53,7 +67,6 @@ export const lambdaHandler = async (event: APIGatewayProxyEvent): Promise<APIGat
         }
         body = JSON.stringify({
             message,
-            err
         });
     } finally {
         await client.end();
