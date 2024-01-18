@@ -59,7 +59,6 @@ export const lambdaHandler = async (event: APIGatewayProxyEvent): Promise<APIGat
         body = JSON.stringify(response);
         statusCode = 200;
     } catch (err) {
-        console.log(err);
         let message = '';
         if (!(err instanceof AppError) || !err.statusCode) {
             statusCode = 500;

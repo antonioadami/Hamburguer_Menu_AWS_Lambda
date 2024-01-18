@@ -26,8 +26,6 @@ export const lambdaHandler = async (event: APIGatewayProxyEvent): Promise<APIGat
     let query = '';
     let relationshipQuery = '';
 
-    let response: any;
-
     try {
         if (!event.body) {
             throw new AppError(404, 'Request must have a body');
@@ -59,7 +57,7 @@ export const lambdaHandler = async (event: APIGatewayProxyEvent): Promise<APIGat
             throw new AppError(404, 'Hamburguer already exists');
         }
 
-        response = await client.query(query);
+        await client.query(query);
 
         let findIngredientQuery = 'SELECT id FROM ingredients WHERE id IN(';
 
@@ -90,7 +88,6 @@ export const lambdaHandler = async (event: APIGatewayProxyEvent): Promise<APIGat
 
         statusCode = 201;
     } catch (err) {
-        console.log(err);
         let message = '';
         if (!(err instanceof AppError) || !err.statusCode) {
             statusCode = 500;
@@ -101,7 +98,6 @@ export const lambdaHandler = async (event: APIGatewayProxyEvent): Promise<APIGat
         }
         body = JSON.stringify({
             message,
-            response,
             err,
         });
     } finally {

@@ -37,7 +37,6 @@ export const lambdaHandler = async (event: APIGatewayProxyEvent): Promise<APIGat
             data,
         });
     } catch (err) {
-        console.log(err);
         statusCode = 500;
         body = JSON.stringify({
             message: 'some error happened',

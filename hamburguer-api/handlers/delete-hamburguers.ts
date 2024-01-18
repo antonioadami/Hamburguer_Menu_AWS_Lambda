@@ -23,47 +23,22 @@ export const lambdaHandler = async (event: APIGatewayProxyEvent): Promise<APIGat
         database: process.env.DB_NAME,
         port: parseInt(process.env.DB_PORT as string),
     });
-    let query = '';
-    let findQuery = 'SELECT id FROM ingredients WHERE name IN(';
 
     try {
-        if (!event.body) {
-            throw new AppError(404, 'Request must have a body');
-        }
-        const { data } = JSON.parse(event.body);
-        if (!Array.isArray(data)) {
-            throw new AppError(404, 'Data must be an Array');
+        const burguerId = parseInt(event.pathParameters?.id as string);
+
+        if (Number.isNaN(burguerId)) {
+            throw new AppError(404, 'Missing burguer id path parameter');
         }
 
-        data.forEach((dataItem, index) => {
-            if (!dataItem.type) {
-                throw new AppError(404, "Missing 'type'");
-            }
-            if (dataItem.type !== 'ingredients') {
-                throw new AppError(404, "Wrong 'type'");
-            }
-
-            if (index !== 0) {
-                findQuery += ', ';
-            }
-            findQuery += `'${dataItem.attributes.name}'`;
-
-            query += `INSERT INTO ingredients(${Object.keys(dataItem.attributes)}) VALUES(${Object.values(
-                dataItem.attributes,
-            ).map((value) => (typeof value === 'string' ? `'${value}'` : value))});`;
-        });
-        findQuery += ');';
+        const deleteRelationshipQuery = `delete from hamburguer_ingredient where hamburguer_id=${burguerId};`;
+        const deleteBurguer = `DELETE FROM hamburguers WHERE id=${burguerId};`;
 
         await client.connect();
+        await client.query(deleteRelationshipQuery);
+        await client.query(deleteBurguer);
 
-        const existingData = await client.query(findQuery);
-
-        if (existingData.rowCount !== 0) {
-            throw new AppError(404, 'Ingredient already exists');
-        }
-
-        await client.query(query);
-        statusCode = 201;
+        statusCode = 200;
     } catch (err) {
         let message = '';
         if (!(err instanceof AppError) || !err.statusCode) {
@@ -75,6 +50,7 @@ export const lambdaHandler = async (event: APIGatewayProxyEvent): Promise<APIGat
         }
         body = JSON.stringify({
             message,
+            err,
         });
     } finally {
         await client.end();

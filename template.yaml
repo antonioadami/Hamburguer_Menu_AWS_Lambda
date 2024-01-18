@@ -1,4 +1,4 @@
-AWSTemplateFormatVersion: '2010-09-09'
+AWSTemplateFormatVersion: "2010-09-09"
 Transform: AWS::Serverless-2016-10-31
 Description: >
   node-hamburguer
@@ -43,7 +43,7 @@ Resources:
       Handler: handlers/configure-database.lambdaHandler
       Runtime: nodejs20.x
       Architectures:
-      - x86_64
+        - x86_64
       Events:
         ConfigureDatabase:
           Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
@@ -65,7 +65,7 @@ Resources:
         Target: es2020
         Sourcemap: true
         EntryPoints:
-        - handlers/configure-database.ts
+          - handlers/configure-database.ts
   GetIngredientsFunction:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
     Properties:
@@ -73,7 +73,7 @@ Resources:
       Handler: handlers/get-ingredients.lambdaHandler
       Runtime: nodejs20.x
       Architectures:
-      - x86_64
+        - x86_64
       Events:
         GetIngredients:
           Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
@@ -95,7 +95,7 @@ Resources:
         Target: es2020
         Sourcemap: true
         EntryPoints:
-        - handlers/get-ingredients.ts
+          - handlers/get-ingredients.ts
   GetMenuFunction:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
     Properties:
@@ -103,7 +103,7 @@ Resources:
       Handler: handlers/get-menu.lambdaHandler
       Runtime: nodejs20.x
       Architectures:
-      - x86_64
+        - x86_64
       Events:
         GetMenu:
           Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
@@ -125,7 +125,7 @@ Resources:
         Target: es2020
         Sourcemap: true
         EntryPoints:
-        - handlers/get-menu.ts
+          - handlers/get-menu.ts
   PostIngredientsFunction:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
     Properties:
@@ -133,7 +133,7 @@ Resources:
       Handler: handlers/post-ingredients.lambdaHandler
       Runtime: nodejs20.x
       Architectures:
-      - x86_64
+        - x86_64
       Events:
         PostIngredients:
           Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
@@ -155,7 +155,7 @@ Resources:
         Target: es2020
         Sourcemap: true
         EntryPoints:
-        - handlers/post-ingredients.ts
+          - handlers/post-ingredients.ts
   PostOrderFunction:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
     Properties:
@@ -163,7 +163,7 @@ Resources:
       Handler: handlers/post-order.lambdaHandler
       Runtime: nodejs20.x
       Architectures:
-      - x86_64
+        - x86_64
       Events:
         PostOrder:
           Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
@@ -185,7 +185,7 @@ Resources:
         Target: es2020
         Sourcemap: true
         EntryPoints:
-        - handlers/post-order.ts
+          - handlers/post-order.ts
   PatchIngredientsFunction:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
     Properties:
@@ -193,7 +193,7 @@ Resources:
       Handler: handlers/patch-ingredients.lambdaHandler
       Runtime: nodejs20.x
       Architectures:
-      - x86_64
+        - x86_64
       Events:
         PatchIngredients:
           Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
@@ -215,7 +215,7 @@ Resources:
         Target: es2020
         Sourcemap: true
         EntryPoints:
-        - handlers/patch-ingredients.ts
+          - handlers/patch-ingredients.ts
   PostHamburguersFunction:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
     Properties:
@@ -223,7 +223,7 @@ Resources:
       Handler: handlers/post-hamburguers.lambdaHandler
       Runtime: nodejs20.x
       Architectures:
-      - x86_64
+        - x86_64
       Events:
         PostHamburguers:
           Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
@@ -245,7 +245,37 @@ Resources:
         Target: es2020
         Sourcemap: true
         EntryPoints:
-        - handlers/post-hamburguers.ts
+          - handlers/post-hamburguers.ts
+  DeleteHamburguersFunction:
+    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    Properties:
+      CodeUri: hamburguer-api
+      Handler: handlers/delete-hamburguers.lambdaHandler
+      Runtime: nodejs20.x
+      Architectures:
+        - x86_64
+      Events:
+        DeleteHamburguers:
+          Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
+          Properties:
+            Path: /hamburguers/{id}
+            Method: delete
+      Environment:
+        Variables:
+          # Make table name accessible as environment variable from function code during execution
+          DB_USER: !Ref DBUser
+          DB_PASSWORD: !Ref DBPassword
+          DB_HOST: !Ref DBHost
+          DB_NAME: !Ref DBName
+          DB_PORT: !Ref DBPort
+    Metadata: # Manage esbuild properties
+      BuildMethod: esbuild
+      BuildProperties:
+        Minify: true
+        Target: es2020
+        Sourcemap: true
+        EntryPoints:
+          - handlers/delete-hamburguers.ts
 
 Outputs:
   # ServerlessRestApi is an implicit API created out of Events key under Serverless::Function
